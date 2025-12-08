@@ -1,0 +1,58 @@
+trigger:
+  branches:
+    include:
+    - master
+    - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  nodeVersion: '20.x'
+
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: Build
+    displayName: 'Build Job'
+    steps:
+    
+    # Install Node.js
+    - task: NodeTool@0
+      displayName: 'Install Node.js'
+      inputs:
+        versionSpec: $(nodeVersion)
+    
+    # Install npm dependencies
+    - task: Npm@1
+      displayName: 'npm install'
+      inputs:
+        command: 'install'
+        workingDir: '$(System.DefaultWorkingDirectory)'
+    
+    # Build Angular app for production
+    - task: Npm@1
+      displayName: 'npm run build'
+      inputs:
+        command: 'custom'
+        workingDir: '$(System.DefaultWorkingDirectory)'
+        customCommand: 'run build -- --configuration production'
+    
+    # Archive the build output
+    - task: ArchiveFiles@2
+      displayName: 'Archive Build Output'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/dist/student-app-ui/browser'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/frontend-$(Build.BuildId).zip'
+        replaceExistingArchive: true
+    
+    # Publish build artifacts
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifacts'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'frontend-drop'
+        publishLocation: 'Container'

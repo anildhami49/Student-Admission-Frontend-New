@@ -1,5 +1,4 @@
-
 export const environment = {
-  production: false,
-  apiUrl: 'https://localhost:7279/api'  // Change port to your API port
+  production: true,
+  apiUrl: 'https://studentapp-api-backend-gqf3cvcte2ffcjbg.centralindia-01.azurewebsites.net/api'
 };

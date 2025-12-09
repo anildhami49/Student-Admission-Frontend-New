@@ -24,7 +24,7 @@ import { environment } from '../environments/environments';
         <button type="submit">Submit</button>
       </form>
 
-      <h3>All Students</h3>
+      <h3>Course Details</h3>
       <div *ngFor="let s of students" class="student-card">
         <p><strong>{{s.name}}</strong> - {{s.email}} - {{s.course}}</p>
       </div>

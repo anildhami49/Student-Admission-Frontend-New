@@ -1,0 +1,74 @@
+name: CI & Deploy - Angular -> Azure Web App
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: githubaction
+  NODE_VERSION: '20.x'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      package-path: ${{ steps.detect.outputs.package-path }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production)
+        run: npm run build -- --configuration production
+
+      - name: Show dist and detect package path
+        id: detect
+        run: |
+          echo "Listing dist..."
+          ls -la dist || true
+          if [ -d "dist" ]; then
+            inner="$(ls dist | head -n1 || true)"
+            if [ -n "$inner" ] && [ -d "dist/$inner" ]; then
+              echo "package-path=./dist/$inner" >> $GITHUB_OUTPUT
+            else
+              echo "package-path=./dist" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "package-path=." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: angular-dist
+          path: ${{ steps.detect.outputs.package-path }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: Development
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: angular-dist
+          path: ./artifact
+
+      - name: Deploy to Azure Web App (Publish Profile)
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./artifact

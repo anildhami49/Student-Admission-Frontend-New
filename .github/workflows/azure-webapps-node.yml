@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: githubaction
+  AZURE_WEBAPP_NAME: anildhami
   NODE_VERSION: '20.x'
 
 permissions:

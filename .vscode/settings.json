@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/fcef4f58-fe06-4507-a4d8-b2424212d42c/resourceGroups/studentAdmission/providers/Microsoft.Web/sites/test-app-anil",
+    "appService.deploySubpath": "."
+}

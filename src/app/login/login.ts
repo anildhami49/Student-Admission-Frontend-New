@@ -10,7 +10,7 @@ import { AuthService } from '../auth';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="container">
-      <h2>GenAquarius Login</h2>
+      <h2>GenAquarius  Noida Login</h2>
       <form (ngSubmit)="onSubmit()">
         <input [(ngModel)]="email" name="email" type="email" placeholder="Email" required>
         <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required>

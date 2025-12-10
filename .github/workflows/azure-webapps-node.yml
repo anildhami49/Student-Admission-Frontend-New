@@ -1,4 +1,4 @@
-name: CI & Deploy - Angular -> Azure Web App
+name: CI & Deploy - Angular -> Azure Web App (Gated Deploy)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: anildhami
+  AZURE_WEBAPP_NAME: anildhami          # your Azure Web App name
   NODE_VERSION: '20.x'
 
 permissions:
@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       package-path: ${{ steps.detect.outputs.package-path }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,22 +30,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build (production)
+      - name: Build Angular (Production)
         run: npm run build -- --configuration production
 
-      - name: Show dist and detect package path
+      - name: Detect dist folder (nested or flat)
         id: detect
         run: |
-          echo "Listing dist..."
+          echo "Inspecting dist folder..."
           ls -la dist || true
+
           if [ -d "dist" ]; then
-            inner="$(ls dist | head -n1 || true)"
-            if [ -n "$inner" ] && [ -d "dist/$inner" ]; then
-              echo "package-path=./dist/$inner" >> $GITHUB_OUTPUT
+            INNER="$(ls dist | head -n1 || true)"
+            if [ -n "$INNER" ] && [ -d "dist/$INNER" ]; then
+              echo "Detected nested dist folder: $INNER"
+              echo "package-path=./dist/$INNER" >> $GITHUB_OUTPUT
             else
+              echo "Detected flat dist folder"
               echo "package-path=./dist" >> $GITHUB_OUTPUT
             fi
           else
+            echo "dist folder missing"
             echo "package-path=." >> $GITHUB_OUTPUT
           fi
 
@@ -57,16 +62,20 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+
+    # REQUIRED APPROVAL — This is your staging environment
     environment:
-      name: Development
+      name: staging      # must match the environment name you created
+                         # REQUIRED REVIEWERS will pause this deploy step
+
     steps:
-      - name: Download artifact
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: angular-dist
           path: ./artifact
 
-      - name: Deploy to Azure Web App (Publish Profile)
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
